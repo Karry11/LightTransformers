@@ -5,15 +5,16 @@ from fastapi.responses import StreamingResponse
 import uvicorn
 import json
 import time
-
+input_path = "/mnt/e/LocalModelList/Qwen2.5-0.5B/"
 # ─── HTTP Server Process ─────────────────────────────────────────────────────
 
 def start_http_server(request_queue, response_queue):
     # 仅加载 tokenizer，无需初始化模型
     from transformers import AutoTokenizer
     tokenizer = AutoTokenizer.from_pretrained(
-        "/mnt/s/NLP/LocalModel/qwen2-0.5b/",
-        trust_remote_code=True
+        input_path,
+        trust_remote_code=True,
+        local_files_only=True
     )
 
     app = FastAPI()
@@ -44,13 +45,18 @@ def router_worker(request_queue, response_queue, max_new_tokens=256):
     from transformers import AutoModelForCausalLM, AutoTokenizer
     import torch
 
-    MODEL_PATH = "/mnt/s/NLP/LocalModel/qwen2-0.5b/"
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
+    MODEL_PATH = input_path
+    tokenizer = AutoTokenizer.from_pretrained(
+        MODEL_PATH,
+        trust_remote_code=True,
+        local_files_only=True
+    )
     model = AutoModelForCausalLM.from_pretrained(
         MODEL_PATH,
         torch_dtype=torch.float16,
         device_map="auto",
-        trust_remote_code=True
+        trust_remote_code=True,
+        local_files_only=True
     )
     model.config.use_cache = True
     device = next(model.parameters()).device
