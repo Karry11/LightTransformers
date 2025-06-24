@@ -1,5 +1,6 @@
 import multiprocessing as mp
 from multiprocessing import Process
+from transformers import Qwen2Tokenizer, Qwen2ForCausalLM
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 import uvicorn
@@ -7,14 +8,16 @@ import redis
 import json
 import uuid
 import time
+import torch
 from common.config import Config
+from models.model_load import lazy_load_model
+config_ = Config()
 
-# ─── Redis 连接池 ───────────────────────────────────────────────────────────
 redis_pool = redis.ConnectionPool(
-    host="127.0.0.1",
-    port=6379,
+    host=Config.REDIS_HOST,
+    port=Config.REDIS_PORT,
     db=0,
-    max_connections=20,
+    max_connections=Config.REDIS_MAX_CONNECTIONS,
 )
 
 def get_redis():
@@ -58,21 +61,13 @@ def start_http_server():
         headers = {"X-Session-Id": session_id}
         return StreamingResponse(event_generator(), media_type="text/plain", headers=headers)
 
-    uvicorn.run(app, host="0.0.0.0", port=8000, log_level="info")
+    uvicorn.run(app, host=Config.REDIS_HOST, port=Config.PORT, log_level="info")
 
 # ─── Router Worker Process ───────────────────────────────────────────────────
 def router_worker(max_new_tokens=256):
-    from transformers import AutoModelForCausalLM, AutoTokenizer
-    import torch
+    model, tokenizer = lazy_load_model(config_)
 
-    MODEL_PATH = "/mnt/s/NLP/LocalModel/qwen2-0.5b/"
-    tokenizer = AutoTokenizer.from_pretrained(MODEL_PATH, trust_remote_code=True)
-    model = AutoModelForCausalLM.from_pretrained(
-        MODEL_PATH,
-        torch_dtype=torch.float16,
-        device_map="auto",
-        trust_remote_code=True,
-    )
+
     model.config.use_cache = True
     device = next(model.parameters()).device
 

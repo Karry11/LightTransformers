@@ -12,4 +12,5 @@ class Config:
     REDIS_HOST: str = "127.0.0.1"
     REDIS_PORT: int = 6379
     REDIS_MAX_CONNECTIONS: int = 20
+    MODEL_NAME: str = "qwen2"
 

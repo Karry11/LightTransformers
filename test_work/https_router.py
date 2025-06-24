@@ -6,6 +6,7 @@ import uvicorn
 import json
 import time
 input_path = "/mnt/e/LocalModelList/Qwen2.5-0.5B/"
+# input_path = "/mnt/s/NLP/LocalModel/qwen2-0.5b/"
 # ─── HTTP Server Process ─────────────────────────────────────────────────────
 
 def start_http_server(request_queue, response_queue):
