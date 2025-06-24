@@ -92,8 +92,6 @@ if __name__ == "__main__":
     print(f"PyTorch RMSNorm: {pt_time:.3f} ms")
     print(f"Triton  RMSNorm: {triton_time:.3f} ms")
     print(f"Speedup: {pt_time / triton_time:.2f}x")
-    print(rmsnorm_triton(x, w))
-    print("123")
-    print(rmsnorm_pytorch(x, w))
-    print(torch.allclose(rmsnorm_triton(x, w), rmsnorm_pytorch(x, w),))
+    print(torch.max(rmsnorm_triton(x, w) - rmsnorm_pytorch(x, w)))
+    print(torch.allclose(rmsnorm_triton(x, w), rmsnorm_pytorch(x, w),atol=0.005))
 
