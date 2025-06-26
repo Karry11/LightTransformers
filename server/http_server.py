@@ -1,13 +1,9 @@
-import multiprocessing as mp
-from multiprocessing import Process
-from transformers import Qwen2Tokenizer, Qwen2ForCausalLM
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
 import uvicorn
 import redis
 import json
 import uuid
-import time
 import torch
 from common.config import Config
 from models.model_load import lazy_load_model
@@ -23,7 +19,7 @@ redis_pool = redis.ConnectionPool(
 def get_redis():
     return redis.Redis(connection_pool=redis_pool)
 
-# ─── HTTP Server Process ─────────────────────────────────────────────────────
+# ─── HTTP Server Process ────────────────────────────────────────────────────
 def start_http_server():
     app = FastAPI()
 
@@ -66,11 +62,9 @@ def start_http_server():
 # ─── Router Worker Process ───────────────────────────────────────────────────
 def router_worker(max_new_tokens=256):
     model, tokenizer = lazy_load_model(config_)
-
-
     model.config.use_cache = True
-    device = next(model.parameters()).device
 
+    device = next(model.parameters()).device
     r = get_redis()
     while True:
         # 等待统一 prompt 队列的请求
@@ -87,7 +81,6 @@ def router_worker(max_new_tokens=256):
             out = model(input_ids=inputs, use_cache=True, return_dict=True)
             past = out.past_key_values
 
-                # 逐 token 生成并推入专属列表，遇到 EOS 即结束
         eos_id = model.config.eos_token_id if hasattr(model.config, 'eos_token_id') else tokenizer.eos_token_id
         for step in range(max_new_tokens):
             if step == 0:
