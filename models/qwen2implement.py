@@ -1,12 +1,4 @@
-from transformers import Qwen2Tokenizer, Qwen2ForCausalLM
-from torch import nn
-import triton
-
-import torch
-from transformers import Qwen2Model
 from transformers.models.qwen2.modeling_qwen2 import *
-import torch
-import torch.nn as nn
 import torch
 import torch.nn as nn
 import triton
@@ -89,15 +81,12 @@ class Qwen2RMSNormTriton(nn.Module):
         returns same shape & dtype
         """
         input_dtype = hidden_states.dtype
-        # convert to float32 and flatten leading dims
         orig_shape = hidden_states.shape
         batch, seq_len, hidden_size = orig_shape
         x = hidden_states.to(torch.float32).view(-1, hidden_size)
 
-        # Triton RMSNorm
         y = rmsnorm_triton(x, self.weight.to(torch.float32), self.variance_epsilon)
 
-        # reshape back and convert dtype
         y = y.view(batch, seq_len, hidden_size).to(input_dtype)
         return y
 
@@ -112,17 +101,9 @@ class qwen2modelimplement(Qwen2ForCausalLM):
         self.vocab_size = config.vocab_size
         self.lm_head = nn.Linear(config.hidden_size, config.vocab_size, bias=False)
 
-        # Initialize weights and apply final processing
         self.post_init()
 
 class Qwen2ModelTriron(Qwen2Model):
-    """
-    Transformer decoder consisting of *config.num_hidden_layers* layers. Each layer is a [`Qwen2DecoderLayer`]
-
-    Args:
-        config: Qwen2Config
-    """
-
     def __init__(self, config: Qwen2Config):
         super().__init__(config)
         self.padding_idx = config.pad_token_id

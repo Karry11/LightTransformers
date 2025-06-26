@@ -32,7 +32,7 @@ def start_http_server():
 
         # 生成唯一 session_id
         session_id = str(uuid.uuid4())
-        prompt_key = f"prompt:{session_id}"
+        # prompt_key = f"prompt:{session_id}"
         answer_key = f"answer:{session_id}"
 
         r = get_redis()
